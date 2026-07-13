@@ -32,6 +32,11 @@ gradient-boosted classifier trained on technical indicators.
    boundary, predicts the next candle's direction, and once that candle
    closes, scores the previous prediction and logs it to
    `logs/predictions_log.csv`, printing a running accuracy.
+6. **Auto-retrain** — the bot loop also refits the model from scratch on a
+   schedule (default: every 24h, on the most recent 60 days) so it doesn't
+   go stale. This is periodic batch retraining, not online/incremental
+   learning — it re-fetches fresh history and re-trains from zero each
+   time, it doesn't update itself from its own prediction log.
 
 ## Setup
 
@@ -76,8 +81,10 @@ candle using the latest live data.
 ### 3. Run the live bot
 
 ```bash
-python scripts/run_bot.py                # runs forever, Ctrl+C to stop
-python scripts/run_bot.py --iterations 5  # runs 5 cycles then exits
+python scripts/run_bot.py                          # runs forever, Ctrl+C to stop
+python scripts/run_bot.py --iterations 5            # runs 5 cycles then exits
+python scripts/run_bot.py --retrain-every-hours 12  # retrain twice a day instead of daily
+python scripts/run_bot.py --no-auto-retrain         # disable scheduled retraining
 ```
 
 Each cycle: sleeps until the next 15-minute boundary, fetches the latest
@@ -87,22 +94,37 @@ appended to `logs/predictions_log.csv` for later analysis.
 
 ## Retraining
 
-Markets drift, so re-run `scripts/train.py` periodically (e.g. weekly) to
-refresh the model on recent data.
+By default, `run_bot.py` auto-retrains every 24 hours on the most recent 60
+days of data (see flags above to change the cadence or window, or disable
+it). It checks the saved model file's timestamp each cycle, so it survives
+bot restarts without retraining unnecessarily.
+
+You can also trigger a one-off retrain manually at any time:
+
+```bash
+python scripts/train.py --days 60
+```
+
+Note this is **batch retraining**, not online learning: each retrain
+re-fetches history and refits the model from scratch. It helps the model
+track shifting market regimes, but it does not learn from its own
+prediction log, and it cannot manufacture predictive signal that isn't
+present in the underlying technical indicators (see the disclaimer above).
 
 ## Project layout
 
 ```
 bitcoin_predictor/
-  config.py     # symbol, interval, paths, hyperparameters
-  data.py       # Binance klines fetching
-  features.py   # technical indicators + labeling
-  model.py      # train/save/load/predict
-  backtest.py   # long/cash simulation vs. buy & hold
+  config.py         # symbol, interval, paths, hyperparameters
+  data.py           # Binance klines fetching
+  features.py       # technical indicators + labeling
+  model.py          # train/save/load/predict
+  backtest.py       # long/cash simulation vs. buy & hold
+  train_pipeline.py # shared fetch+train+evaluate+save pipeline
 scripts/
-  train.py          # fetch data, train, evaluate, save model
+  train.py          # CLI: one-off train/evaluate/save
   predict_once.py   # one-shot prediction using live data
-  run_bot.py         # continuous predict-and-score loop
+  run_bot.py         # continuous predict-and-score loop with scheduled auto-retrain
 tests/          # unit tests using synthetic OHLCV data (no network needed)
 ```
 
