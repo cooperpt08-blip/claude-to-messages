@@ -1,0 +1,30 @@
+# Groups of equivalent markets across platforms.
+#
+# Each group is one real-world question; each member points at that same
+# question on a different platform. IDs below are PLACEHOLDERS -- find the
+# real ones for markets you care about with:
+#
+#   python scripts/list_markets.py polymarket "fed rate"
+#   python scripts/list_markets.py kalshi "fed rate"
+#   python scripts/list_markets.py predictit "fed rate"
+#   python scripts/list_markets.py manifold "fed rate"
+#
+# then replace the params below with the slug/ticker/market_id you find.
+# Only group markets that truly share the same resolution criteria and
+# deadline -- a mismatch here will look like a juicy "edge" that isn't real.
+
+groups:
+  - name: fed-rate-decision-example
+    members:
+      - source: polymarket
+        params:
+          slug: fed-decision-in-2026
+      - source: kalshi
+        params:
+          ticker: FED-26DEC-T4.00
+      - source: predictit
+        params:
+          market_id: 7456
+      - source: manifold
+        params:
+          slug: will-the-fed-cut-rates-in-2026
