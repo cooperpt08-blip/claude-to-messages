@@ -6,7 +6,10 @@ import os
 SYMBOL = os.environ.get("BTC_SYMBOL", "BTCUSDT")
 INTERVAL = "15m"
 INTERVAL_MINUTES = 15
-BINANCE_BASE_URL = "https://api.binance.com"
+# api.binance.com returns HTTP 451 (geo-blocked) for US-based requests.
+# Override with BINANCE_BASE_URL=https://api.binance.us if you're in the US,
+# or any other Binance-compatible mirror.
+BINANCE_BASE_URL = os.environ.get("BINANCE_BASE_URL", "https://api.binance.com")
 KLINES_ENDPOINT = "/api/v3/klines"
 MAX_KLINES_PER_REQUEST = 1000
 

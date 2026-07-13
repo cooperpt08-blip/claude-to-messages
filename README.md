@@ -41,6 +41,16 @@ pip install -r requirements.txt
 
 Requires outbound network access to `api.binance.com`.
 
+**US-based?** `api.binance.com` returns `HTTP 451` (geo-blocked) for US IP
+addresses. Point the bot at Binance.US instead:
+
+```bash
+export BINANCE_BASE_URL=https://api.binance.us
+```
+
+Set this in every terminal session before running the scripts below (or add
+it to your shell profile).
+
 ## Usage
 
 ### 1. Train a model
