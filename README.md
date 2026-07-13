@@ -199,6 +199,37 @@ python scripts/watch_markets.py --interval 300 --iterations 10
 Re-scans on an interval and appends every flagged edge to
 `logs/prediction_market_edges_log.csv` with a timestamp.
 
+### 5. Backtest the logged edges
+
+```bash
+python scripts/backtest_markets.py
+python scripts/backtest_markets.py --position-size 250 --assumed-cost 0.015
+```
+
+Replays `logs/prediction_market_edges_log.csv` (built up by
+`watch_markets.py`) and reports what following every logged opportunity
+would have earned: how many opportunities cleared an assumed round-trip
+fee/slippage cost, win rate, total gross edge observed, and final balance
+at a given position size. It's bookkeeping over prices you actually
+logged, not a market-microstructure simulator — it assumes you could
+execute at the logged price.
+
+### 6. Simulate offline (no live API needed)
+
+```bash
+python scripts/simulate_bot.py
+python scripts/simulate_bot.py --steps 300 --seed 42 --min-edge 0.02
+```
+
+Runs the exact same scan → edge-detection → backtest pipeline against a
+synthetic random-walk of prices instead of live network calls, then prints
+a backtest summary of the run. Useful for a first look at how the pipeline
+behaves, for development, or in network-restricted environments — since
+the four platforms' real API response shapes couldn't be verified against
+live traffic while building this, this is also the easiest way to confirm
+the detection and backtest logic works end-to-end before pointing it at
+markets.yaml.
+
 ## Project layout
 
 ```
@@ -208,20 +239,25 @@ prediction_market_bot/
   markets.py        # loads markets.yaml, fetches quotes per group
   markets.yaml       # curated groups of equivalent markets (edit this)
   edge.py            # cross-platform + complementary edge detection
-  report.py          # plain-text table/edge formatting
+  backtest.py         # replay a logged-edges CSV into a P&L summary
+  simulate.py          # synthetic offline price generator (no network)
+  report.py            # plain-text table/edge/backtest formatting
   sources/
     polymarket.py, kalshi.py, predictit.py, manifold.py
 scripts/
-  list_markets.py    # keyword search helper to find market IDs
-  scan_markets.py    # one-shot scan + report
-  watch_markets.py    # continuous scan-and-log loop
+  list_markets.py     # keyword search helper to find market IDs
+  scan_markets.py     # one-shot scan + report
+  watch_markets.py     # continuous scan-and-log loop
+  backtest_markets.py   # replay logs/prediction_market_edges_log.csv
+  simulate_bot.py        # offline scan+backtest demo, synthetic prices
 ```
 
 ## Running tests
 
 ```bash
 pip install pytest
-pytest tests/test_edge.py tests/test_markets.py tests/test_sources.py -v
+pytest tests/test_edge.py tests/test_markets.py tests/test_sources.py \
+       tests/test_backtest.py tests/test_simulate.py -v
 ```
 
 All tests use synthetic quotes / sample API response shapes — no network

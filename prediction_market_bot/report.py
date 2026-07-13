@@ -46,3 +46,15 @@ def format_pricing_errors(errors: dict) -> str:
     if not errors:
         return "  (no data)"
     return "\n".join(f"  {source:<12} {error:+.4f} vs consensus" for source, error in sorted(errors.items()))
+
+
+def format_backtest_summary(summary: dict) -> str:
+    lines = [
+        f"  Opportunities seen:   {summary['n_opportunities']}",
+        f"  Opportunities traded: {summary['n_executed']} (win rate {summary['win_rate']:.1%})",
+        f"  Gross edge observed:  {summary['gross_edge_sum']:+.4f} (sum, probability points)",
+        f"  Avg net edge/trade:   {summary['avg_net_edge']:+.4f}",
+        f"  Starting balance:     ${summary['starting_balance']:,.2f}",
+        f"  Final balance:        ${summary['final_balance']:,.2f}",
+    ]
+    return "\n".join(lines)
