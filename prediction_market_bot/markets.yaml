@@ -4,27 +4,26 @@
 # question on a different platform. IDs below are PLACEHOLDERS -- find the
 # real ones for markets you care about with:
 #
-#   python scripts/list_markets.py polymarket "fed rate"
-#   python scripts/list_markets.py kalshi "fed rate"
-#   python scripts/list_markets.py predictit "fed rate"
-#   python scripts/list_markets.py manifold "fed rate"
+#   python scripts/list_markets.py polymarket "wnba"
+#   python scripts/list_markets.py kalshi "wnba"
+#   python scripts/list_markets.py predictit "wnba"
+#   python scripts/list_markets.py manifold "wnba"
 #
 # then replace the params below with the slug/ticker/market_id you find.
 # Only group markets that truly share the same resolution criteria and
 # deadline -- a mismatch here will look like a juicy "edge" that isn't real.
+#
+# Note: PredictIt only lists political/economic markets, never sports, so
+# it won't have a WNBA equivalent -- leave it out of sports groups entirely
+# rather than guessing at an ID. Kalshi's sports coverage varies by state/
+# season, so check with list_markets.py before assuming it has one either.
 
 groups:
-  - name: fed-rate-decision-example
+  - name: wnba-champion-example
     members:
       - source: polymarket
         params:
-          slug: fed-decision-in-2026
-      - source: kalshi
-        params:
-          ticker: FED-26DEC-T4.00
-      - source: predictit
-        params:
-          market_id: 7456
+          slug: wnba-champion-2026
       - source: manifold
         params:
-          slug: will-the-fed-cut-rates-in-2026
+          slug: which-team-will-win-the-2026-wnba-finals

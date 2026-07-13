@@ -168,9 +168,12 @@ Requires outbound network access to `gamma-api.polymarket.com`,
 ### 1. Find market IDs to compare
 
 ```bash
-python scripts/list_markets.py polymarket "fed rate"
-python scripts/list_markets.py kalshi "fed rate"
+python scripts/list_markets.py polymarket "wnba"
+python scripts/list_markets.py manifold "wnba"
 ```
+
+(PredictIt is political/economic markets only — it won't have sports
+equivalents. Kalshi's sports coverage varies, so check before assuming.)
 
 Prints matching markets and the `market_id` value to put in
 `prediction_market_bot/markets.yaml`.
