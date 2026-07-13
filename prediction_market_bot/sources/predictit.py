@@ -52,12 +52,16 @@ def fetch_market(market_id, contract_id=None) -> Quote:
 
 
 def search_markets(keyword: str, limit: int = 10) -> list:
-    """Best-effort keyword search across all PredictIt markets/contracts."""
+    """Best-effort keyword search across all PredictIt markets/contracts.
+    Every word in `keyword` must appear somewhere in the market name (in
+    any order), which is more forgiving of phrasing than an exact-phrase
+    match. Note PredictIt only lists political/economic markets, so a
+    sports keyword like "wnba" will legitimately return nothing."""
     data = get_json(f"{BASE_URL}/all/")
-    keyword_lower = keyword.lower()
+    words = keyword.lower().split()
     matches = []
     for market in data.get("markets", []):
-        if keyword_lower not in (market.get("name", "") or "").lower():
+        if not all(w in (market.get("name", "") or "").lower() for w in words):
             continue
         for contract in market.get("contracts", []):
             matches.append(_contract_to_quote(market, contract))

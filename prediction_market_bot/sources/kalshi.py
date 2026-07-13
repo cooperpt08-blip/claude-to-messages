@@ -46,14 +46,32 @@ def fetch_market(ticker: str) -> Quote:
     return _market_to_quote(market, ticker)
 
 
-def search_markets(keyword: str, limit: int = 10) -> list:
-    """Best-effort keyword search using Kalshi's market listing endpoint."""
-    data = get_json(
-        f"{BASE_URL}/markets",
-        params={"status": "open", "limit": 200},
-        headers=_headers(),
-    )
-    keyword_lower = keyword.lower()
-    markets = data.get("markets", [])
-    matches = [m for m in markets if keyword_lower in (m.get("title", "") or "").lower()]
-    return [_market_to_quote(m, m.get("ticker")) for m in matches[:limit]]
+def search_markets(keyword: str, limit: int = 10, max_pages: int = 10) -> list:
+    """Best-effort keyword search using Kalshi's market listing endpoint,
+    paging through open markets via its cursor. Every word in `keyword`
+    must appear somewhere in the title/subtitle/ticker (in any order),
+    which is more forgiving of phrasing differences than an exact-phrase
+    match."""
+    words = keyword.lower().split()
+    matches = []
+    cursor = None
+
+    for _ in range(max_pages):
+        params = {"status": "open", "limit": 200}
+        if cursor:
+            params["cursor"] = cursor
+        data = get_json(f"{BASE_URL}/markets", params=params, headers=_headers())
+        markets = data.get("markets", [])
+
+        for m in markets:
+            haystack = f"{m.get('title', '')} {m.get('subtitle', '')} {m.get('ticker', '')}".lower()
+            if all(w in haystack for w in words):
+                matches.append(_market_to_quote(m, m.get("ticker")))
+                if len(matches) >= limit:
+                    return matches
+
+        cursor = data.get("cursor")
+        if not cursor or not markets:
+            break
+
+    return matches

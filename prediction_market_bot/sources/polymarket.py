@@ -52,14 +52,33 @@ def fetch_market(slug: str = None, market_id: str = None) -> Quote:
     return _market_to_quote(market, slug or str(market_id))
 
 
-def search_markets(keyword: str, limit: int = 10) -> list:
+def search_markets(keyword: str, limit: int = 10, max_scanned: int = 2000) -> list:
     """Best-effort keyword search over active Polymarket markets, to help
-    discover slugs for markets.yaml. Fetches a batch of active markets and
-    filters client-side, since the public API doesn't offer full-text search."""
-    data = get_json(
-        f"{BASE_URL}/markets",
-        params={"active": "true", "closed": "false", "limit": 100, "order": "volume", "ascending": "false"},
-    )
-    keyword_lower = keyword.lower()
-    matches = [m for m in data if keyword_lower in (m.get("question", "") or "").lower()]
-    return [_market_to_quote(m, m.get("slug", str(m.get("id")))) for m in matches[:limit]]
+    discover slugs for markets.yaml. The public Gamma API has no full-text
+    search endpoint, so this pages through active markets and matches
+    client-side: every word in `keyword` must appear somewhere in the
+    question or slug (in any order), which is more forgiving of phrasing
+    differences than requiring the exact phrase."""
+    words = keyword.lower().split()
+    matches = []
+    page_size = 500
+    offset = 0
+
+    while offset < max_scanned:
+        data = get_json(
+            f"{BASE_URL}/markets",
+            params={"active": "true", "closed": "false", "limit": page_size, "offset": offset},
+        )
+        if not data:
+            break
+        for m in data:
+            haystack = f"{m.get('question', '')} {m.get('slug', '')}".lower()
+            if all(w in haystack for w in words):
+                matches.append(_market_to_quote(m, m.get("slug", str(m.get("id")))))
+                if len(matches) >= limit:
+                    return matches
+        if len(data) < page_size:
+            break
+        offset += page_size
+
+    return matches
